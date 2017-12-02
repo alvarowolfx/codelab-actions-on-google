@@ -1,6 +1,4 @@
 {
-  "include": [
-    "node_modules/actions-on-google",
-    "node_modules/firebase-functions"
-  ]
+  "files": ["index.js"],
+  "include": ["node_modules"]
 }

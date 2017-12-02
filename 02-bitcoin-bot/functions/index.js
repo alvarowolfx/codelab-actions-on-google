@@ -5,12 +5,18 @@ const { DialogflowApp } = require('actions-on-google');
 
 const ACTION_PRICE = 'price';
 const ACTION_TOTAL = 'total';
+const ARG_CRYPTO_CURRENCY = 'CryptoCurrency';
+const ARG_CURRENCY = 'Currency';
 
 /**
  * @param {DialogflowApp} assistant
  */
 function priceHandler(assistant) {
-  const msg = 'Getting current price via Firebase';
+  let cryptoCurrency = assistant.getArgument(ARG_CRYPTO_CURRENCY);
+  let currency = assistant.getArgument(ARG_CURRENCY) || 'USD';
+  const msg = `Getting current price for ${cryptoCurrency} in ${
+    currency
+  } via Firebase`;
   assistant.tell(msg);
 }
 
@@ -18,7 +24,11 @@ function priceHandler(assistant) {
  * @param {DialogflowApp} assistant
  */
 function totalHandler(assistant) {
-  const msg = 'Getting total price via Firebase';
+  let cryptoCurrency = assistant.getArgument(ARG_CRYPTO_CURRENCY);
+  let currency = assistant.getArgument(ARG_CURRENCY) || 'USD';
+  const msg = `Getting total price for ${cryptoCurrency} in ${
+    currency
+  } via Firebase`;
   assistant.tell(msg);
 }
 
