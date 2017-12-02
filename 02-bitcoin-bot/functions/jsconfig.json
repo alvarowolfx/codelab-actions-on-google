@@ -1,0 +1,6 @@
+{
+  "include": [
+    "node_modules/actions-on-google",
+    "node_modules/firebase-functions"
+  ]
+}
