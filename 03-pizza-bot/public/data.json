@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "key": "capricciosa",
+      "title": "capricciosa",
+      "image":
+        "https://firebasestorage.googleapis.com/v0/b/pizza-a0bec.appspot.com/o/cappricciosa.png?alt=media"
+    },
+    {
+      "key": "four cheese",
+      "title": "four cheese",
+      "image":
+        "https://firebasestorage.googleapis.com/v0/b/pizza-a0bec.appspot.com/o/four_cheese.png?alt=media"
+    },
+    {
+      "key": "margherita",
+      "title": "margherita",
+      "image":
+        "https://firebasestorage.googleapis.com/v0/b/pizza-a0bec.appspot.com/o/marguerita.png?alt=media"
+    },
+    {
+      "key": "marinara",
+      "title": "marinara",
+      "image":
+        "https://firebasestorage.googleapis.com/v0/b/pizza-a0bec.appspot.com/o/marinara.png?alt=media"
+    },
+    {
+      "key": "pepperoni",
+      "title": "pepperoni",
+      "image":
+        "https://firebasestorage.googleapis.com/v0/b/pizza-a0bec.appspot.com/o/peperonni.png?alt=media"
+    }
+  ]
+}
