@@ -6,6 +6,8 @@ const ARG_TIME = 'time';
 const ARG_ADDRESS = 'address';
 const ARG_SAUCE = 'sauce';
 
+const ACTION_ORDER_PIZZA = 'order.pizza';
+
 const CTX_ORDER_PIZZA = 'orderpizza';
 
 /**
@@ -39,7 +41,7 @@ function getOrder(assistant) {
 function orderPizzaHandler(assistant) {
   const order = getOrder(assistant);
 
-  assistant.setContext('orderpizza', 5, { order });
+  assistant.setContext(CTX_ORDER_PIZZA, 5, { order });
 
   if (order.address) {
     assistant.askForPermission(

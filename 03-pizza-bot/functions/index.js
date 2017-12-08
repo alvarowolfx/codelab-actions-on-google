@@ -63,7 +63,7 @@ function orderPizzaHandler(assistant) {
         tellOrderInfo(assistant, order);
       });
     } else {
-      assistant.setContext('orderpizza', 5, { order });
+      assistant.setContext(CTX_ORDER_PIZZA, 5, { order });
 
       if (order.address) {
         assistant.askForPermission(
