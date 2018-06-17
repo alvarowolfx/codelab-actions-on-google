@@ -1,25 +1,19 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const { DialogflowApp } = require('actions-on-google');
+const { dialogflow, DialogFlowConversation } = require('actions-on-google');
 
-const ACTION_PRICE = 'price';
+const INTENT_PRICE = 'Price';
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogFlowConversation} assistant
  */
-function priceHandler(assistant) {
-  const msg = 'Getting current price via Firebase';
-  assistant.tell(msg);
+function priceHandler(assistant) {  
+  const msg = 'Getting current price via Firebase';  
+  assistant.close(msg);
 }
 
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
-  (req, res) => {
-    const assistant = new DialogflowApp({ request: req, response: res });
+const app = dialogflow();
+app.intent(INTENT_PRICE, priceHandler);
 
-    const actionMap = new Map();
-    actionMap.set(ACTION_PRICE, priceHandler);
-
-    assistant.handleRequest(actionMap);
-  }
-);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);

@@ -33,4 +33,4 @@ const msg = `Right now the price of a ${formattedCryptoCurrency} is ${
   formattedPrice
 } ${formattedCurrency}.`;
 
-assistant.tell(msg);
+assistant.close(msg);

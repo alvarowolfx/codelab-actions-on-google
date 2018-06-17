@@ -1,11 +1,11 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const { DialogflowApp } = require('actions-on-google');
+const { dialogflow, DialogFlowConversation, Suggestions } = require('INTENTs-on-google');
 const fetch = require('node-fetch');
 
-const ACTION_PRICE = 'price';
-const ACTION_WELCOME = 'input.welcome';
+const INTENT_PRICE = 'price';
+const INTENT_WELCOME = 'Default Welcome Intent';
 const ARG_CRYPTO_CURRENCY = 'CryptoCurrency';
 const ARG_CURRENCY = 'Currency';
 
@@ -25,11 +25,11 @@ const SUGGESTIONS = [
 ];
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogFlowConversation} assistant
  */
-function priceHandler(assistant) {
-  const cryptoCurrency = assistant.getArgument(ARG_CRYPTO_CURRENCY);
-  const currency = assistant.getArgument(ARG_CURRENCY) || 'USD';
+function priceHandler(assistant) {  
+  const cryptoCurrency = assistant.parameters[ARG_CRYPTO_CURRENCY];
+  const currency = assistant.parameters[ARG_CURRENCY] || 'USD';
   const formattedCryptoCurrency =
     CRYPTO_CURRENCY_NAMES[cryptoCurrency] || cryptoCurrency;
   const formattedCurrency = currency.toUpperCase();
@@ -52,7 +52,7 @@ function priceHandler(assistant) {
       const msg = `Sorry, I cannot get the current price for ${
         formattedCryptoCurrency
       } right now. Try again later.`;
-      assistant.tell(msg);
+      assistant.close(msg);
     });
 }
 
@@ -60,23 +60,13 @@ function priceHandler(assistant) {
  * @param {DialogflowApp} assistant
  */
 function welcomeHandler(assistant) {
-  const msg = assistant
-    .buildRichResponse()
-    .addSimpleResponse(
-      'Welcome to CryptoCurrency Bot. Do you like to know the price for which cryptocurrency ?'
-    )
-    .addSuggestions(SUGGESTIONS);
-  assistant.ask(msg);
+  assistant.ask('Welcome to CryptoCurrency Bot. Do you like to know the price for which cryptocurrency ?')  
+  assistant.ask(new Suggestions(SUGGESTIONS));
 }
 
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
-  (req, res) => {
-    const assistant = new DialogflowApp({ request: req, response: res });
 
-    const actionMap = new Map();
-    actionMap.set(ACTION_PRICE, priceHandler);
-    actionMap.set(ACTION_WELCOME, welcomeHandler);
+const app = dialogflow();
+app.intent(INTENT_WELCOME, welcomeHandler);
+app.intent(INTENT_PRICE, priceHandler);
 
-    assistant.handleRequest(actionMap);
-  }
-);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);

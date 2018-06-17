@@ -14,7 +14,7 @@ const formattedCryptoCurrency =
 const formattedCurrency = currency.toUpperCase();
 
 const url = BASE_API_URL + TICKER_METHOD + `/${cryptoCurrency}-${currency}`;
-fetch(url)
+return fetch(url)
   .then(res => res.json())
   .then(res => {
     let { ticker } = res;
@@ -25,11 +25,11 @@ fetch(url)
       formattedPrice
     } ${formattedCurrency}.`;
 
-    assistant.tell(msg);
+    assistant.close(msg);
   })
   .catch(res => {
     const msg = `Sorry, I cannot get the current price for ${
       formattedCryptoCurrency
     } right now. Try again later.`;
-    assistant.tell(msg);
+    assistant.close(msg);
   });

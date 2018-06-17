@@ -1,3 +1,5 @@
+const { dialogflow, DialogFlowConversation, Suggestions } = require('actions-on-google');
+
 const SUGGESTIONS = [
   'How much bitcoin costs',
   'dogecoin in brl',
@@ -8,11 +10,6 @@ const SUGGESTIONS = [
  * @param {DialogflowApp} assistant
  */
 function welcomeHandler(assistant) {
-  const msg = assistant
-    .buildRichResponse()
-    .addSimpleResponse(
-      'Welcome to CryptoCurrency Bot. Do you like to know the price for which cryptocurrency ?'
-    )
-    .addSuggestions(SUGGESTIONS);
-  assistant.ask(msg);
+  assistant.ask('Welcome to CryptoCurrency Bot. Do you like to know the price for which cryptocurrency ?')  
+  assistant.ask(new Suggestions(SUGGESTIONS));
 }
