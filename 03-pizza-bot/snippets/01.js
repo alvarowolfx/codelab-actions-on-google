@@ -1,32 +1,24 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const { DialogflowApp } = require('actions-on-google');
+const { dialogflow, DialogflowConversation } = require('actions-on-google');
 
-const ACTION_WELCOME = 'input.welcome';
+const INTENT_WELCOME = 'Default Welcome Intent';
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function welcomeHandler(assistant) {
-  let welcoming = 'Welcome to Mamma Mia Pizza, is awesome to have you back!';
-  if (assistant.getLastSeen()) {
-    welcoming = 'Welcome to Mamma Mia Pizza!';
+  let welcoming = 'Welcome to Mamma Mia Pizza!';
+  if (assistant.user.name.display) {
+    welcoming = `Welcome to Mamma Mia Pizza, is awesome to have you back ${assistant.user.name.display}!`;
   }
   welcoming += ' What pizza do you want today ?';
 
-  assistant.ask({
-    speech: welcoming + ' Peperoni and Margherita are pretty popular!',
-    displayText: welcoming
-  });
+  assistant.ask(welcoming);  
 }
 
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
-  (req, res) => {
-    const assistant = new DialogflowApp({ request: req, response: res });
+const app = dialogflow();
+app.intent(INTENT_WELCOME, welcomeHandler);
 
-    const actionMap = new Map();
-    actionMap.set(ACTION_WELCOME, welcomeHandler);
-    assistant.handleRequest(actionMap);
-  }
-);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);

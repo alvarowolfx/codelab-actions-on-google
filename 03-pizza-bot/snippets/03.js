@@ -6,21 +6,21 @@ const ARG_TIME = 'time';
 const ARG_ADDRESS = 'address';
 const ARG_SAUCE = 'sauce';
 
-const ACTION_ORDER_PIZZA = 'order.pizza';
+const INTENT_ORDER_PIZZA = 'order.pizza';
 
 const CTX_ORDER_PIZZA = 'orderpizza';
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function getOrder(assistant) {
-  const type = assistant.getArgument(ARG_TYPE);
-  const topping = assistant.getArgument(ARG_TOPPING);
-  const crust = assistant.getArgument(ARG_CRUST);
-  const sauce = assistant.getArgument(ARG_SAUCE);
-  const size = assistant.getArgument(ARG_SIZE);
-  const time = assistant.getArgument(ARG_TIME);
-  const address = assistant.getArgument(ARG_ADDRESS);
+  const type = assistant.parameters[ARG_TYPE];
+  const topping = assistant.parameters[ARG_TOPPING];
+  const crust = assistant.parameters[ARG_CRUST];
+  const sauce = assistant.parameters[ARG_SAUCE];
+  const size = assistant.parameters[ARG_SIZE];
+  const time = assistant.parameters[ARG_TIME];
+  const address = assistant.parameters[ARG_ADDRESS];
 
   const order = {
     type,
@@ -36,25 +36,25 @@ function getOrder(assistant) {
 }
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function orderPizzaHandler(assistant) {
   const order = getOrder(assistant);
+  console.log('order', order);
 
-  assistant.setContext(CTX_ORDER_PIZZA, 5, { order });
+  assistant.contexts.set(CTX_ORDER_PIZZA, 5 , { order });
 
   if (order.address) {
-    assistant.askForPermission(
-      'To complete your order we need you name',
-      assistant.SupportedPermissions.NAME
-    );
+    assistant.ask(new Permission({
+      context: 'To complete your order we need you name',
+      permissions: ['NAME']
+    }));
   } else {
-    assistant.askForPermissions(
-      'To complete your order we need you name and your location',
-      [
-        assistant.SupportedPermissions.DEVICE_PRECISE_LOCATION,
-        assistant.SupportedPermissions.NAME
-      ]
+    assistant.ask(
+      new Permission({
+        context: 'To complete your order we need you name and your location',
+        permissions: ['DEVICE_PRECISE_LOCATION', 'NAME']        
+      })
     );
   }
 }

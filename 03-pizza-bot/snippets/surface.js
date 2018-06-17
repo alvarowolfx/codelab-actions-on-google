@@ -1,2 +1,2 @@
-let hasScreen = app.hasSurfaceCapability(app.SurfaceCapabilities.SCREEN_OUTPUT);
-let hasAudio = app.hasSurfaceCapability(app.SurfaceCapabilities.AUDIO_OUTPUT);
+let hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+let hasAudio = conv.surface.capabilities.has('actions.capability.AUDIO_OUTPUT')

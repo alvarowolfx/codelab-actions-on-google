@@ -1,21 +1,16 @@
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function isScreenAvailable(assistant) {
-  return assistant.hasAvailableSurfaceCapabilities(
-    assistant.SurfaceCapabilities.SCREEN_OUTPUT
-  );
+  return assistant.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
 }
 
-if (isScreenAvailable(assistant)) {
-  let msg = assistant
-    .buildRichResponse()
-    .addSimpleResponse(welcoming)
-    .addSuggestions(['margherita', 'peperoni', 'marinara']);
-  assistant.ask(msg);
+if (isScreenAvailable(assistant)) {    
+  assistant.ask(welcoming);
+  assistant.ask(new Suggestions(['margherita', 'peperoni', 'marinara']));
 } else {
-  assistant.ask({
-    speech: welcoming + ' Peperoni and Margherita are pretty popular!',
-    displayText: welcoming
+  const msg = new SimpleResponse({
+    speech: welcoming + ' Peperoni and Marguerita are pretty popular!',      
   });
+  assistant.ask(msg);
 }

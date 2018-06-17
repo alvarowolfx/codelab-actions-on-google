@@ -1,5 +1,5 @@
-const userId = assistant.getUser().userId;
-order.name = assistant.getUserName().displayName;
+const userId = assistant.user.id;
+order.name = assistant.user.name.display;
 order.userId = userId;
 
 const saveUserPromise = saveUserData(
@@ -11,17 +11,17 @@ const saveUserPromise = saveUserData(
 
 const saveOrderPromise = saveOrder(order);
 
-Promise.all([saveUserPromise, saveOrderPromise])
+return Promise.all([saveUserPromise, saveOrderPromise])
   .then(() => {
-    tellOrderInfo(assistant, order);
+    closeOrder(assistant, order);
   })
   .catch(e => {
-    assistant.tell('Sorry, but something bad happened with your order.');
+    assistant.close('Sorry, but something bad happened with your order.');
   });
 
 /**  */
-function tellOrderInfo(assistant, order) {
-  assistant.tell(
+function closeOrder(assistant, order) {
+  assistant.close(
     `Your order has been received ${order.name}. Soon your ${
       order.type
     } pizza will arrive.`

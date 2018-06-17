@@ -1,15 +1,15 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const { DialogflowApp } = require('actions-on-google');
+const { dialogflow, DialogflowConversation, Suggestions, SimpleResponse, Permission } = require('actions-on-google');
 
 const admin = require('firebase-admin');
-admin.initializeApp(functions.config().firebase);
+admin.initializeApp();
 const db = admin.database();
 
-const ACTION_WELCOME = 'input.welcome';
-const ACTION_ORDER_PIZZA = 'order.pizza';
-const ACTION_USER_DATA = 'user.data';
+const INTENT_WELCOME = 'Default Welcome Intent';
+const INTENT_ORDER_PIZZA = 'order.pizza';
+const INTENT_USER_DATA = 'user.data';
 
 const ARG_TYPE = 'type';
 const ARG_TOPPING = 'topping';
@@ -22,16 +22,16 @@ const ARG_SAUCE = 'sauce';
 const CTX_ORDER_PIZZA = 'orderpizza';
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function getOrder(assistant) {
-  const type = assistant.getArgument(ARG_TYPE);
-  const topping = assistant.getArgument(ARG_TOPPING);
-  const crust = assistant.getArgument(ARG_CRUST);
-  const sauce = assistant.getArgument(ARG_SAUCE);
-  const size = assistant.getArgument(ARG_SIZE);
-  const time = assistant.getArgument(ARG_TIME);
-  const address = assistant.getArgument(ARG_ADDRESS);
+  const type = assistant.parameters[ARG_TYPE];
+  const topping = assistant.parameters[ARG_TOPPING];
+  const crust = assistant.parameters[ARG_CRUST];
+  const sauce = assistant.parameters[ARG_SAUCE];
+  const size = assistant.parameters[ARG_SIZE];
+  const time = assistant.parameters[ARG_TIME];
+  const address = assistant.parameters[ARG_ADDRESS];
 
   const order = {
     type,
@@ -47,58 +47,19 @@ function getOrder(assistant) {
 }
 
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
-function orderPizzaHandler(assistant) {
-  const order = getOrder(assistant);
-  const userId = assistant.getUser().userId;
-  getUser(userId).then(user => {
-    if (user) {
-      order.userId = userId;
-      order.name = user.displayName;
-      order.address = user.address;
-      order.location = user.location;
-
-      saveOrder(order).then(() => {
-        tellOrderInfo(assistant, order);
-      });
-    } else {
-      assistant.setContext(CTX_ORDER_PIZZA, 5, { order });
-
-      if (order.address) {
-        assistant.askForPermission(
-          'To complete your order we need you name',
-          assistant.SupportedPermissions.NAME
-        );
-      } else {
-        assistant.askForPermissions(
-          'To complete your order we need you name and your location',
-          [
-            assistant.SupportedPermissions.DEVICE_PRECISE_LOCATION,
-            assistant.SupportedPermissions.NAME
-          ]
-        );
-      }
-    }
-  });
-}
-
-/**
- * @param {DialogflowApp} assistant
- */
-function userDataHandler(assistant) {
-  let order = assistant.getContextArgument(CTX_ORDER_PIZZA, 'order');
-  if (order) {
-    order = order.value;
-  }
-  if (assistant.isPermissionGranted()) {
+function userDataHandler(assistant, params, confirmationGranted) {
+  const ctx = assistant.contexts.get(CTX_ORDER_PIZZA);
+  let order = ctx.parameters['order'];
+  if (confirmationGranted) {
     if (!order.address) {
-      order.location = assistant.getDeviceLocation();
-      order.address = order.location.address || '';
+      order.location = assistant.device.location;
+      order.address = order.location.formattedAddress || '';
     }
 
-    const userId = assistant.getUser().userId;
-    order.name = assistant.getUserName().displayName;
+    const userId = assistant.user.id;
+    order.name = assistant.user.name.display;
     order.userId = userId;
 
     const saveUserPromise = saveUserData(
@@ -110,46 +71,82 @@ function userDataHandler(assistant) {
 
     const saveOrderPromise = saveOrder(order);
 
-    Promise.all([saveUserPromise, saveOrderPromise])
+    return Promise.all([saveUserPromise, saveOrderPromise])
       .then(() => {
-        tellOrderInfo(assistant, order);
+        closeOrder(assistant, order);
       })
       .catch(e => {
-        assistant.tell('Sorry, but something bad happened with your order.');
+        assistant.close('Sorry, but something bad happened with your order.');
       });
   }
 }
 
-function tellOrderInfo(assistant, order) {
-  assistant.tell(
+function closeOrder(assistant, order) {
+  assistant.close(
     `Your order has been received ${order.name}. Soon your ${
-      order.type
+    order.type
     } pizza will arrive.`
   );
 }
 
+
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
+function orderPizzaHandler(assistant) {
+  const order = getOrder(assistant);
+  const userId = assistant.user.id;
+  return getUser(userId).then(user => {
+    if (user) {
+      order.userId = userId;
+      order.name = user.displayName;
+      order.address = user.address;
+      order.location = user.location;
+      return saveOrder(order).then(() => {
+        return closeOrder(assistant, order);
+      });
+    } else {
+      assistant.contexts.set(CTX_ORDER_PIZZA, 5, { order });
+      if (order.address) {
+        assistant.ask(new Permission({
+          context: 'To complete your order we need you name',
+          permissions: ['NAME']
+        }));
+      } else {
+        assistant.ask(
+          new Permission({
+            context: 'To complete your order we need you name and your location',
+            permissions: ['DEVICE_PRECISE_LOCATION', 'NAME']
+          })
+        );
+      }
+    }
+  });
+}
+
 function welcomeHandler(assistant) {
-  let welcoming = 'Welcome to Mamma Mia Pizza, is awesome to have you back!';
-  if (assistant.getLastSeen()) {
-    welcoming = 'Welcome to Mamma Mia Pizza!';
+  console.log(assistant.user);
+  let welcoming = 'Welcome to Mamma Mia Pizza!';
+  if (assistant.user.name.display) {
+    welcoming = `Welcome to Mamma Mia Pizza, is awesome to have you back ${assistant.user.name.display}!`;
   }
   welcoming += ' What pizza do you want today ?';
 
+  const msg = new SimpleResponse({
+    speech: welcoming + 'Peperoni and Marguerita are pretty popular!',
+    text: welcoming
+  });
+
   if (isScreenAvailable(assistant)) {
-    let msg = assistant
-      .buildRichResponse()
-      .addSimpleResponse(welcoming)
-      .addSuggestions(['margherita', 'peperoni', 'marinara']);
     assistant.ask(msg);
+    assistant.ask(new Suggestions(['margherita', 'peperoni', 'marinara']));
   } else {
-    assistant.ask({
-      speech: welcoming + ' Peperoni and Margherita are pretty popular!',
-      displayText: welcoming
-    });
+    assistant.ask(msg);
   }
+}
+
+function isScreenAvailable(assistant) {
+  return assistant.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
 }
 
 function getUser(userId) {
@@ -172,23 +169,10 @@ function saveUserData(userId, displayName, location, address) {
   });
 }
 
-/**
- * @param {DialogflowApp} assistant
- */
-function isScreenAvailable(assistant) {
-  return assistant.hasAvailableSurfaceCapabilities(
-    assistant.SurfaceCapabilities.SCREEN_OUTPUT
-  );
-}
 
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest(
-  (req, res) => {
-    const assistant = new DialogflowApp({ request: req, response: res });
+const app = dialogflow();
+app.intent(INTENT_WELCOME, welcomeHandler);
+app.intent(INTENT_ORDER_PIZZA, orderPizzaHandler);
+app.intent(INTENT_USER_DATA, userDataHandler);
 
-    const actionMap = new Map();
-    actionMap.set(ACTION_WELCOME, welcomeHandler);
-    actionMap.set(ACTION_ORDER_PIZZA, orderPizzaHandler);
-    actionMap.set(ACTION_USER_DATA, userDataHandler);
-    assistant.handleRequest(actionMap);
-  }
-);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);

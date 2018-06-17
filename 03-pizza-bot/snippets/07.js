@@ -1,36 +1,34 @@
+
 /**
- * @param {DialogflowApp} assistant
+ * @param {DialogflowConversation} assistant
  */
 function orderPizzaHandler(assistant) {
   const order = getOrder(assistant);
-  const userId = assistant.getUser().userId;
-  getUser(userId).then(user => {
-    if (user) {
+  const userId = assistant.user.id;
+  return getUser(userId).then(user => {      
+    if(user){
       order.userId = userId;
-      order.name = user.displayName;
-      order.address = user.address;
-      order.location = user.location;
-
-      saveOrder(order).then(() => {
-        tellOrderInfo(assistant, order);
-      });
+        order.name = user.displayName;
+        order.address = user.address;
+        order.location = user.location;
+        return saveOrder(order).then(() => {
+          return closeOrder(assistant, order);
+        });
     } else {
-      assistant.setContext('orderpizza', 5, { order });
-
-      if (order.address) {
-        assistant.askForPermission(
-          'To complete your order we need you name',
-          assistant.SupportedPermissions.NAME
-        );
-      } else {
-        assistant.askForPermissions(
-          'To complete your order we need you name and your location',
-          [
-            assistant.SupportedPermissions.DEVICE_PRECISE_LOCATION,
-            assistant.SupportedPermissions.NAME
-          ]
-        );
-      }
-    }
-  });
+        assistant.contexts.set(CTX_ORDER_PIZZA, 5 , { order });
+        if (order.address) {
+          assistant.ask(new Permission({
+            context: 'To complete your order we need you name',
+            permissions: ['NAME']
+          }));
+        } else {
+          assistant.ask(
+            new Permission({
+              context: 'To complete your order we need you name and your location',
+              permissions: ['DEVICE_PRECISE_LOCATION', 'NAME']        
+            })
+          );
+        }
+    }      
+  })
 }
