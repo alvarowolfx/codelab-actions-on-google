@@ -13,3 +13,5 @@ function welcomeHandler(assistant) {
   assistant.ask('Welcome to CryptoCurrency Bot. Do you like to know the price for which cryptocurrency ?')  
   assistant.ask(new Suggestions(SUGGESTIONS));
 }
+
+app.intent('Default Welcome Intent', welcomeHandler);
